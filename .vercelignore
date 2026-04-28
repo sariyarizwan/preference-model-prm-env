@@ -1,0 +1,9 @@
+.git
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.pytest_cache
+pytest-cache-files-rmk8lc4c
+*.egg-info
+src/prm_env.egg-info
+tests/
