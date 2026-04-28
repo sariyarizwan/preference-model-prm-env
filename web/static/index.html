@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRM Research Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<!-- ═══════════════════════════════════════════════════ LANDING ═══ -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-wrap">
+    <div class="landing-badge">RL Environment · AI/ML Research</div>
+    <h1 class="landing-title">PRM<br>Research Lab</h1>
+    <p class="landing-sub">
+      Design, stress-test, and understand Process Reward Models.<br>
+      Can you build one that passes every gate of the judge?
+    </p>
+    <div class="landing-actions">
+      <button class="btn btn-hero" onclick="App.startGame()">▶ Enter the Lab</button>
+      <button class="btn btn-ghost" onclick="App.showPrompt()">📋 View Agent Prompt</button>
+      <button class="btn btn-ghost" onclick="App.goSandbox()">🔬 Open Sandbox</button>
+    </div>
+    <div class="landing-stats">
+      <div class="lstat"><span class="lstat-n">7</span><span class="lstat-l">Gates</span></div>
+      <div class="lstat-div"></div>
+      <div class="lstat"><span class="lstat-n">4</span><span class="lstat-l">Levels</span></div>
+      <div class="lstat-div"></div>
+      <div class="lstat"><span class="lstat-n">3</span><span class="lstat-l">Failure Modes</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ MAP ═══ -->
+<div id="screen-map" class="screen hidden">
+  <nav class="topbar">
+    <span class="topbar-brand">PRM Research Lab</span>
+    <div class="topbar-right">
+      <span id="map-progress" class="progress-chip">0 / 4 cleared</span>
+      <button class="btn btn-sm" onclick="App.showPrompt()">📋 Prompt</button>
+      <button class="btn btn-sm" onclick="App.goSandbox()">🔬 Sandbox</button>
+    </div>
+  </nav>
+  <div class="map-header">
+    <h2>Choose a Level</h2>
+    <p>Each level demonstrates a different submission strategy. Work through all four to understand the failure modes — then win with Level 4.</p>
+  </div>
+  <div id="map-grid" class="map-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ LEVEL ═══ -->
+<div id="screen-level" class="screen hidden">
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="btn btn-sm" onclick="App.goMap()">← Map</button>
+      <span id="level-nav-title" class="topbar-title"></span>
+    </div>
+    <div class="topbar-right">
+      <button id="run-btn" class="btn btn-primary btn-run" onclick="App.runEval()">
+        <span class="run-icon">▶</span> Run Evaluation
+      </button>
+    </div>
+  </nav>
+
+  <div class="level-layout">
+    <!-- Left: info panel -->
+    <div class="level-left">
+      <div class="level-head">
+        <div id="level-icon" class="level-big-icon"></div>
+        <div class="level-head-text">
+          <div id="level-number" class="level-number"></div>
+          <h2 id="level-title" class="level-title"></h2>
+          <p id="level-subtitle" class="level-subtitle"></p>
+          <span id="level-badge" class="diff-badge"></span>
+        </div>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="mission" onclick="App.switchTab('mission',this)">Mission</button>
+        <button class="tab" data-tab="code" onclick="App.switchTab('code',this)">Code</button>
+        <button class="tab" data-tab="theory" onclick="App.switchTab('theory',this)">Theory</button>
+      </div>
+
+      <div id="tab-mission" class="tab-pane active">
+        <p id="level-description" class="level-desc"></p>
+        <div id="level-hint" class="hint-box"></div>
+      </div>
+      <div id="tab-code" class="tab-pane hidden">
+        <div class="code-wrap">
+          <pre id="level-code" class="code-view"></pre>
+        </div>
+      </div>
+      <div id="tab-theory" class="tab-pane hidden">
+        <div id="level-theory" class="theory-text"></div>
+      </div>
+    </div>
+
+    <!-- Right: results panel -->
+    <div class="level-right">
+      <div id="results-empty" class="results-empty">
+        <div class="results-empty-icon">⚡</div>
+        <p>Click <strong>Run Evaluation</strong> to run this submission through the 7-gate judge.</p>
+        <p class="text-muted small">Takes ~2 seconds after first load.</p>
+      </div>
+      <div id="results-panel" class="results-panel hidden">
+        <div class="results-hd">
+          <h3>Evaluation Results</h3>
+          <div id="results-verdict" class="verdict-badge"></div>
+        </div>
+        <div id="gates-container" class="gates-list"></div>
+        <div id="score-block" class="score-block hidden">
+          <div class="score-label">Final Score</div>
+          <div id="score-value" class="score-value">0.000</div>
+          <div id="score-bar-wrap" class="score-bar-wrap">
+            <div id="score-bar" class="score-bar"></div>
+          </div>
+        </div>
+        <div id="results-actions" class="results-actions hidden">
+          <button id="next-btn" class="btn btn-primary" onclick="App.nextLevel()">Next Level →</button>
+          <button class="btn btn-ghost" onclick="App.goMap()">Back to Map</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SANDBOX ═══ -->
+<div id="screen-sandbox" class="screen hidden">
+  <nav class="topbar">
+    <div class="topbar-left">
+      <button class="btn btn-sm" onclick="App.goMap()">← Map</button>
+      <span class="topbar-title">🔬 Sandbox Mode</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-sm" onclick="App.loadTemplate()">Load Template</button>
+      <button class="btn btn-primary btn-run" onclick="App.runSandbox()">
+        <span class="run-icon">▶</span> Run Evaluation
+      </button>
+    </div>
+  </nav>
+  <div class="sandbox-layout">
+    <div class="sandbox-left">
+      <div class="editor-header">
+        <span class="editor-fname">submission.py</span>
+        <span class="editor-hint">Must export load_prm() and MODEL_INFO</span>
+      </div>
+      <textarea id="sandbox-code" class="code-editor" spellcheck="false"
+        placeholder="# Write your PRM submission here
+#
+# Required exports:
+#
+#   def load_prm():
+#       '''Returns a scorer object with a .score() method.'''
+#       ...
+#
+#   # scorer.score(problem_statement: str, step_texts: List[str]) -> List[float]
+#
+#   MODEL_INFO = {
+#       'base': 'model-name',
+#       'uses_lora': True,
+#       'trained_steps': 1000,
+#       'labeling_method': 'your-method',
+#   }
+"></textarea>
+    </div>
+    <div class="sandbox-right">
+      <div id="sandbox-empty" class="results-empty">
+        <div class="results-empty-icon">🔬</div>
+        <p>Write your submission and click <strong>Run Evaluation</strong>.</p>
+        <p class="text-muted small">Your code runs through the real 7-gate judge.</p>
+      </div>
+      <div id="sandbox-panel" class="results-panel hidden">
+        <div class="results-hd">
+          <h3>Evaluation Results</h3>
+          <div id="sandbox-verdict" class="verdict-badge"></div>
+        </div>
+        <div id="sandbox-gates" class="gates-list"></div>
+        <div id="sandbox-score-block" class="score-block hidden">
+          <div class="score-label">Final Score</div>
+          <div id="sandbox-score-value" class="score-value">0.000</div>
+          <div class="score-bar-wrap">
+            <div id="sandbox-score-bar" class="score-bar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ WALKTHROUGH MODAL ═══ -->
+<div id="modal-walkthrough" class="modal-overlay hidden">
+  <div class="modal wt-modal">
+    <div id="wt-content" class="wt-content"></div>
+    <div class="wt-footer">
+      <div id="wt-dots" class="wt-dots"></div>
+      <div class="wt-btns">
+        <button id="wt-prev" class="btn btn-ghost btn-sm" onclick="App.wtPrev()" style="visibility:hidden">← Back</button>
+        <button id="wt-next" class="btn btn-primary" onclick="App.wtNext()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ PROMPT MODAL ═══ -->
+<div id="modal-prompt" class="modal-overlay hidden" onclick="if(event.target===this)App.closePrompt()">
+  <div class="modal modal-wide">
+    <div class="modal-hd">
+      <div>
+        <h3>📋 Agent Prompt</h3>
+        <p class="text-muted small">Given verbatim to the LLM agent at the start of each RL rollout.</p>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="App.closePrompt()">✕ Close</button>
+    </div>
+    <div class="code-wrap">
+      <pre id="prompt-content" class="code-view prompt-view"></pre>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
