@@ -1,4 +1,3 @@
-"""Flask backend for the PRM Research Lab game."""
 from __future__ import annotations
 
 import sys
@@ -17,9 +16,6 @@ from prm_env.data.splits import load_splits      # noqa: E402
 _STATIC = Path(__file__).resolve().parent / "static"
 app = Flask(__name__, static_folder=str(_STATIC), static_url_path="")
 
-# ---------------------------------------------------------------------------
-# Judge — lazy-loaded on first evaluation request
-# ---------------------------------------------------------------------------
 _judge: Judge | None = None
 
 
@@ -32,9 +28,6 @@ def get_judge() -> Judge:
 
 # Judge loads lazily on first evaluation request.
 
-# ---------------------------------------------------------------------------
-# Static metadata
-# ---------------------------------------------------------------------------
 GATE_ORDER = [
     "existence_and_signature",
     "disallowed_checkpoints",
@@ -192,9 +185,6 @@ LEVELS = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
 
 @app.route("/")
 def index():

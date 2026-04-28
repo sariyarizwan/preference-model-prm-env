@@ -1,8 +1,7 @@
 'use strict';
 
-// ══════════════════════════════════════════════════════════════════
-// State
-// ══════════════════════════════════════════════════════════════════
+// --- State ---
+
 const State = {
   screen: 'landing',
   levels: [],
@@ -19,9 +18,8 @@ function saveCompleted() {
   localStorage.setItem('prm_completed', JSON.stringify(State.completed));
 }
 
-// ══════════════════════════════════════════════════════════════════
-// Walkthrough steps
-// ══════════════════════════════════════════════════════════════════
+// --- Walkthrough steps ---
+
 const WT_STEPS = [
   {
     icon: '🧪',
@@ -74,11 +72,9 @@ const WT_STEPS = [
   },
 ];
 
-// ══════════════════════════════════════════════════════════════════
-// Syntax highlighter
-// ══════════════════════════════════════════════════════════════════
+// --- Syntax highlighter ---
+
 function highlight(src) {
-  // Escape HTML
   let out = src
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -91,48 +87,34 @@ function highlight(src) {
     return `\x00${idx}\x00`;
   }
 
-  // Triple-quoted strings (must come first)
   out = out.replace(/("""[\s\S]*?"""|'''[\s\S]*?''')/g,
     m => protect(`<span class="h-string">${m}</span>`));
-
-  // Single-line strings
   out = out.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g,
     m => protect(`<span class="h-string">${m}</span>`));
-
-  // Comments
   out = out.replace(/(#[^\n]*)/g,
     m => protect(`<span class="h-comment">${m}</span>`));
-
-  // Decorators
   out = out.replace(/(^|\n)(@[A-Za-z_]\w*)/g,
     (_, pre, dec) => pre + protect(`<span class="h-dec">${dec}</span>`));
 
-  // Keywords
   const KW = /\b(def|class|return|import|from|if|else|elif|for|while|in|not|and|or|True|False|None|as|with|try|except|finally|raise|assert|lambda|pass|break|continue|yield|async|await|global|nonlocal|del|is)\b/g;
   out = out.replace(KW, m => protect(`<span class="h-kw">${m}</span>`));
 
-  // Built-ins
   const BUILTINS = /\b(print|len|range|list|dict|set|tuple|str|int|float|bool|type|isinstance|getattr|setattr|hasattr|max|min|abs|sum|zip|map|filter|enumerate|super|staticmethod|classmethod|property)\b/g;
   out = out.replace(BUILTINS, m => protect(`<span class="h-builtin">${m}</span>`));
 
-  // def name  /  class name
   out = out.replace(/\bdef\s+([A-Za-z_]\w*)/g,
     (_, n) => `def ` + protect(`<span class="h-func">${n}</span>`));
   out = out.replace(/\bclass\s+([A-Za-z_]\w*)/g,
     (_, n) => `class ` + protect(`<span class="h-class">${n}</span>`));
-
-  // Numbers
   out = out.replace(/\b(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g,
     m => protect(`<span class="h-num">${m}</span>`));
 
-  // Restore
   out = out.replace(/\x00(\d+)\x00/g, (_, i) => store[+i]);
   return out;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// DOM helpers
-// ══════════════════════════════════════════════════════════════════
+// --- DOM helpers ---
+
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -149,7 +131,6 @@ function showScreen(name) {
   State.screen = name;
 }
 
-// Animate score counter
 function animateCount(el, target, duration = 1000) {
   const start = Date.now();
   function tick() {
@@ -162,9 +143,8 @@ function animateCount(el, target, duration = 1000) {
   requestAnimationFrame(tick);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// API calls
-// ══════════════════════════════════════════════════════════════════
+// --- API ---
+
 async function fetchLevels() {
   const r = await fetch('/api/levels');
   return r.json();
@@ -194,9 +174,8 @@ async function evaluateSandbox(code) {
   return r.json();
 }
 
-// ══════════════════════════════════════════════════════════════════
-// Map screen
-// ══════════════════════════════════════════════════════════════════
+// --- Map screen ---
+
 function renderMap() {
   const grid = $('map-grid');
   grid.innerHTML = '';
@@ -232,7 +211,6 @@ function renderMap() {
     grid.appendChild(card);
   });
 
-  // Sandbox card
   const sbCard = document.createElement('div');
   sbCard.className = 'level-card';
   sbCard.onclick = () => App.goSandbox();
@@ -253,9 +231,8 @@ function renderMap() {
   grid.appendChild(sbCard);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// Level screen
-// ══════════════════════════════════════════════════════════════════
+// --- Level screen ---
+
 async function populateLevel(data) {
   $('level-nav-title').textContent = `Level ${data.number}: ${data.title}`;
   $('level-icon').textContent = data.icon;
@@ -270,43 +247,34 @@ async function populateLevel(data) {
   $('level-description').textContent = data.description;
   $('level-hint').textContent = data.gates_hint;
   $('level-theory').textContent = data.theory;
-
-  // Syntax-highlighted code
   $('level-code').innerHTML = highlight(data.code || '');
 
-  // Reset results
   $('results-empty').classList.remove('hidden');
   $('results-panel').classList.add('hidden');
 
-  // Switch to mission tab
   App.switchTab('mission', document.querySelector('.tab[data-tab="mission"]'));
 }
 
-// ══════════════════════════════════════════════════════════════════
-// Results rendering
-// ══════════════════════════════════════════════════════════════════
+// --- Results rendering ---
+
 async function renderResults(data, { gatesId, verdictId, scoreBlockId, scoreValId, scoreBarId, actionsId }) {
-  const gates = data.gates || [];
   const passedAll = data.passed_all;
 
-  // Show verdict
   const verdictEl = $(verdictId);
   verdictEl.textContent = passedAll ? '✓ ALL GATES PASSED' : '✗ FAILED';
   verdictEl.className = `verdict-badge ${passedAll ? 'verdict-pass' : 'verdict-fail'}`;
 
-  // Animate gates one by one
   const container = $(gatesId);
   container.innerHTML = '';
 
-  for (let i = 0; i < gates.length; i++) {
+  for (let i = 0; i < (data.gates || []).length; i++) {
     await sleep(160);
-    const g = gates[i];
+    const g = data.gates[i];
     const status = g.passed === true ? 'pass' : g.passed === false ? 'fail' : 'skip';
     const pillLabel = g.passed === true ? 'PASS' : g.passed === false ? 'FAIL' : 'SKIP';
 
     const card = document.createElement('div');
     card.className = `gate-card ${status}`;
-    card.style.animationDelay = '0ms';
     card.innerHTML = `
       <div class="gate-row">
         <span class="gate-icon-el">${g.icon}</span>
@@ -320,67 +288,44 @@ async function renderResults(data, { gatesId, verdictId, scoreBlockId, scoreValI
 
   await sleep(200);
 
-  // Score block
   if (scoreBlockId) {
-    const scoreBlock = $(scoreBlockId);
-    scoreBlock.classList.remove('hidden');
-    const scoreVal = $(scoreValId);
-    animateCount(scoreVal, data.final_score || 0, 900);
+    $(scoreBlockId).classList.remove('hidden');
+    animateCount($(scoreValId), data.final_score || 0, 900);
     setTimeout(() => {
       const bar = $(scoreBarId);
       if (bar) bar.style.width = `${Math.min((data.final_score || 0) * 100, 100)}%`;
     }, 100);
   }
 
-  // Actions
   if (actionsId) {
     $(actionsId).classList.remove('hidden');
-    // Show "Next Level" only if there is a next level
     const curIdx = State.levels.findIndex(l => l.id === State.currentLevelId);
     const nextBtn = $('next-btn');
-    if (nextBtn) {
-      nextBtn.style.display = curIdx < State.levels.length - 1 ? '' : 'none';
-    }
+    if (nextBtn) nextBtn.style.display = curIdx < State.levels.length - 1 ? '' : 'none';
   }
 }
 
-// ══════════════════════════════════════════════════════════════════
-// Walkthrough
-// ══════════════════════════════════════════════════════════════════
+// --- Walkthrough ---
+
 function renderWTStep() {
   const step = WT_STEPS[State.wtStep];
-  const content = $('wt-content');
-
-  content.innerHTML = `
+  $('wt-content').innerHTML = `
     <div class="wt-step-icon">${step.icon}</div>
     <div class="wt-step-title">${step.title}</div>
     <div class="wt-step-body">${step.body}</div>
-    ${step.visual ? step.visual : ''}
+    ${step.visual || ''}
   `;
 
-  // Dots
-  const dotsEl = $('wt-dots');
-  dotsEl.innerHTML = WT_STEPS.map((_, i) =>
+  $('wt-dots').innerHTML = WT_STEPS.map((_, i) =>
     `<div class="wt-dot${i === State.wtStep ? ' active' : ''}"></div>`
   ).join('');
 
-  // Buttons
-  const prevBtn = $('wt-prev');
-  const nextBtn = $('wt-next');
-  prevBtn.style.visibility = State.wtStep === 0 ? 'hidden' : 'visible';
-
-  if (step.cta) {
-    nextBtn.textContent = 'Enter the Lab →';
-  } else if (State.wtStep === WT_STEPS.length - 1) {
-    nextBtn.textContent = 'Enter the Lab →';
-  } else {
-    nextBtn.textContent = 'Next →';
-  }
+  $('wt-prev').style.visibility = State.wtStep === 0 ? 'hidden' : 'visible';
+  $('wt-next').textContent = State.wtStep >= WT_STEPS.length - 1 ? 'Enter the Lab →' : 'Next →';
 }
 
-// ══════════════════════════════════════════════════════════════════
-// App object — all public actions
-// ══════════════════════════════════════════════════════════════════
+// --- App ---
+
 const App = {
 
   async init() {
@@ -405,12 +350,9 @@ const App = {
 
   async goLevel(id) {
     State.currentLevelId = id;
-
-    // Check cache
     if (!State.currentLevelData || State.currentLevelData.id !== id) {
       State.currentLevelData = await fetchLevel(id);
     }
-
     await populateLevel(State.currentLevelData);
     showScreen('level');
   },
@@ -422,13 +364,11 @@ const App = {
   },
 
   switchTab(name, btn) {
-    // Deactivate all tabs and panes
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(p => {
       p.classList.remove('active');
       p.classList.add('hidden');
     });
-    // Activate selected
     const pane = $(`tab-${name}`);
     if (pane) { pane.classList.remove('hidden'); pane.classList.add('active'); }
     if (btn) btn.classList.add('active');
@@ -452,19 +392,16 @@ const App = {
 
     try {
       const data = await evaluateLevel(State.currentLevelId);
-
       if (data.error) {
         $('gates-container').innerHTML =
           `<div class="gate-card fail"><div class="gate-row"><span class="gate-pill">ERROR</span></div><div class="gate-detail">${data.detail || data.error}</div></div>`;
       } else {
-        // Save completion
         State.completed[State.currentLevelId] = {
           passed: data.passed_all,
           score: data.final_score,
           ts: Date.now(),
         };
         saveCompleted();
-
         await renderResults(data, {
           gatesId: 'gates-container',
           verdictId: 'results-verdict',
@@ -503,7 +440,6 @@ const App = {
 
     try {
       const data = await evaluateSandbox(code);
-
       if (data.error) {
         $('sandbox-gates').innerHTML =
           `<div class="gate-card fail"><div class="gate-row"><span class="gate-pill">ERROR</span></div><div class="gate-detail">${data.detail || data.error}</div></div>`;
@@ -528,13 +464,8 @@ const App = {
   },
 
   loadTemplate() {
-    const template = `"""
-My PRM Submission
-=================
-Required interface:
-  - load_prm()  -> scorer
-  - scorer.score(problem_statement: str, step_texts: List[str]) -> List[float]
-  - MODEL_INFO  dict with keys: base, uses_lora, trained_steps, labeling_method
+    $('sandbox-code').value = `"""
+PRM Submission
 """
 from __future__ import annotations
 from typing import List
@@ -542,13 +473,9 @@ from typing import List
 
 class MyPRM:
     def score(self, problem_statement: str, step_texts: List[str]) -> List[float]:
-        # TODO: implement genuine step-level scoring
-        # Return a score in [0, 1] for each step.
-        # Higher = more likely that the prefix up to this step is correct.
-        scores = []
-        for step in step_texts:
-            scores.append(0.5)  # replace with real logic
-        return scores
+        # Return a score in [0, 1] per step.
+        # Higher = more likely the prefix up to this step is correct.
+        return [0.5] * len(step_texts)
 
 
 def load_prm() -> MyPRM:
@@ -562,7 +489,6 @@ MODEL_INFO = {
     "labeling_method": "none",
 }
 `;
-    $('sandbox-code').value = template;
   },
 
   async showPrompt() {
@@ -575,13 +501,11 @@ MODEL_INFO = {
     $('modal-prompt').classList.add('hidden');
   },
 
-  // Walkthrough navigation
   wtNext() {
     if (State.wtStep < WT_STEPS.length - 1) {
       State.wtStep++;
       renderWTStep();
     } else {
-      // Done
       $('modal-walkthrough').classList.add('hidden');
       State.walkthroughDone = true;
       localStorage.setItem('prm_wt_done', '1');
@@ -606,7 +530,4 @@ MODEL_INFO = {
   },
 };
 
-// ══════════════════════════════════════════════════════════════════
-// Boot
-// ══════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => App.init());
