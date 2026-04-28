@@ -1,0 +1,19 @@
+[project]
+name = "prm-env"
+version = "0.1.0"
+description = "RL environment for training a Process Reward Model that beats Outcome RM and a PRM800K-style reference PRM on Best-of-N math reasoning."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "sympy>=1.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools.packages.find]
+where = ["src"]
